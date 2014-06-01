@@ -54,11 +54,12 @@ export GRO_DESC="This is GRO description line"
 # Test for MULTI
 export OPTIONS_MULTI="M1 M2"
 export OPTIONS_MULTI_M1="MM1 MM2"
-export OPTIONS_MULTI_M2="MM3 MM4"
+export OPTIONS_MULTI_M2="MM3 MM4 MM5"
 export M1_DESC="sep M1 text"
 export M2_DESC="M2 sep text"
 export MM1_DESC="text MM1 text"
 export MM2_DESC="MM2 text text"
 export MM3_DESC="text MM3 text"
 export MM4_DESC="MM4 text text"
+export MM5_DESC="MM5 text text"
 gdb ${DIALOG}

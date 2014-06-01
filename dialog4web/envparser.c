@@ -69,44 +69,46 @@ get_desc(char const *res, char const *fallback)
   return (desc);
 }
 
-int get_items(InputItem **items, StringList *itemnames, char *type, char *groupname){
+int get_items(ItemList *items, StringList *itemnames, char *type, char *groupname){
 		const char *desc, *name;
 		int sl_len, nitems;
 		nitems = 0;
 		sl_len = itemnames->sl_cur;
-		*items = (InputItem *)calloc(itemnames->sl_cur, sizeof(InputItem));
+		*items = (ItemList)calloc(sl_len, sizeof(InputItem));
+
 		for (int i=0; i < sl_len; i++){
-				name = itemnames->sl_str[i];
+				name = strdup(itemnames->sl_str[i]);
 				desc = get_desc(itemnames->sl_str[i], "");
-				*items[i] = (InputItem){
-						.name = name,
-						.desc = desc,
-						.type = type_map(type),
-						.id = name,
-						.value = name,
-						.isnew = is_new(name),
-						.group = groupname,
-						.checked = is_enable(name)
-				};
+				items[i] = (InputItem *)malloc(sizeof(InputItem));
+				(*items)[i].name = strdup(name);
+				(*items)[i].desc = strdup(desc);
+				(*items)[i].type = strdup(type);
+				(*items)[i].id = strdup(name);
+				(*items)[i].value = strdup(name);
+				(*items)[i].isnew = is_new(name);
+				(*items)[i].group = strdup(groupname);
+				(*items)[i].checked = is_enable(name);
 				nitems++;
 		}
 		return nitems;
 		
 }
 
-int
-env_get_group(ItemGroup *itemgroup, char *name, char *type){
+ItemGroup *
+env_get_group(char *name, char *type){
 		char buf[256];
 		const char *desc;
-		StringList *itemnames;
-		InputItem *items;
+		StringList *itemnames = NULL;
+		ItemGroup *itemgroup;
+		ItemList items;
 		int nitems;
+		itemgroup = (ItemGroup *)malloc(sizeof(ItemGroup));
 
 		/* there is special case for ALL_OPTIONS: it is a checkbox group without
 		 * description and with non-standart option list 
 		 */
 		if (strcmp(name, "ALL") == 0){
-				snprintf(buf, sizeof(buf), "ALL_OPTIONS");
+				sprintf(buf,"ALL_OPTIONS");
 				desc = "All options";
 		}
 		else {
@@ -116,20 +118,21 @@ env_get_group(ItemGroup *itemgroup, char *name, char *type){
 		}
 		itemnames = parse_env_sl(buf);
 		nitems = get_items(&items, itemnames, type, name);
-		itemgroup->name = name;
-		itemgroup->desc = desc;
-		itemgroup->items = items;
-		itemgroup->nitems = nitems;
-		return 0;
+		(*itemgroup).name = strdup(name);
+		(*itemgroup).desc = strdup(desc);
+		(*itemgroup).items = (ItemList)items;
+		(*itemgroup).nitems = nitems;
+		return (itemgroup);
 }
 
 int main(){
 	enable_items = parse_env_sl("PORT_OPTIONS");
 	new_items = parse_env_sl("NEW_OPTIONS");
+	ItemGroup *test;
 
 
-	//env_get_group(&test, "M1", "MULTI");
-	env_get_group(&test, "ALL", "MULTI");
-	printf("%s\n", test.items[0].type);
-	printf("%d\n", test.nitems);
+	test = env_get_group("M2", "MULTI");
+	//env_get_group(&test, "ALL", "MULTI");
+	printf("%d\n", test->nitems);
+	printf("%s\n", test->items[0].name);
 }

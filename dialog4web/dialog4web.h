@@ -29,6 +29,8 @@ typedef struct InputItem {
 		bool checked;
 } InputItem;
 
+typedef InputItem * ItemList;
+
 typedef struct ItemGroup {
 		const char *name;
 		const char *desc;
