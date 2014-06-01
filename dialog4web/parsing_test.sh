@@ -17,7 +17,7 @@ export PORT_OPTIONS="FreeBSD Cc_1 W R11 R32 GRA MM1 MM2 MM4 R12"
 export NEW_OPTIONS="Cc_1 MM3 R22"
 
 # Test for DEFINE/ALL_OPTIONS
-#export ALL_OPTIONS="FreeBSD BbBbb Cc_1"
+export ALL_OPTIONS="FreeBSD BbBbb Cc_1"
 export FreeBSD_DESC="FreeBSD is an advanced operating system for modern server, desktop, and embedded computer platforms"
 export BbBbb_DESC="This is B description line"
 export Cc_1_DESC="This is C description line"
@@ -61,4 +61,4 @@ export MM1_DESC="text MM1 text"
 export MM2_DESC="MM2 text text"
 export MM3_DESC="text MM3 text"
 export MM4_DESC="MM4 text text"
-${DIALOG}
+gdb ${DIALOG}

@@ -1,5 +1,36 @@
 #include "dialog4web.h"
 
+static StringList *enable_items = NULL;
+static StringList *new_items = NULL;
+
+static bool
+is_enable(const char *name)
+{
+	return (sl_find(enable_items, (char *)name) != NULL);
+}
+
+static bool
+is_new(const char *name)
+{
+	return (sl_find(new_items, (char *)name) != NULL);
+}
+
+
+const char *
+type_map(const char *input){
+		if (strcmp(input, "GROUP") == 0)
+				return "checkbox";
+		if (strcmp(input, "MULTI") == 0)
+				return "checkbox";
+		if (strcmp(input, "SINGLE") == 0)
+				return "radio";
+		if (strcmp(input, "RADIO") == 0)
+				return "radio";
+		if (strcmp(input, "BUTTON") == 0)
+				return "button";
+		return "button";
+}
+
 static StringList *
 parse_env_sl(char const *env_name)
 {
@@ -22,7 +53,6 @@ parse_env_sl(char const *env_name)
 	return (sl);
 }
 
-/* get description in env: %s_DESC */
 static char const *
 get_desc(char const *res, char const *fallback)
 {
@@ -40,48 +70,66 @@ get_desc(char const *res, char const *fallback)
 }
 
 int get_items(InputItem **items, StringList *itemnames, char *type, char *groupname){
-		const char *desc;
+		const char *desc, *name;
+		int sl_len, nitems;
+		nitems = 0;
+		sl_len = itemnames->sl_cur;
 		*items = (InputItem *)calloc(itemnames->sl_cur, sizeof(InputItem));
-		for (int i=0; i < itemnames->sl_cur; i++){
+		for (int i=0; i < sl_len; i++){
+				name = itemnames->sl_str[i];
 				desc = get_desc(itemnames->sl_str[i], "");
-				FormItem (&items[i],
-						itemnames->sl_str[i],
-						desc,
-						type,
-						itemnames->sl_str[i],
-						itemnames->sl_str[i],
-						type,
-						groupname,
-						true
-						// XXX: checked is temporary parameter
-						);
+				*items[i] = (InputItem){
+						.name = name,
+						.desc = desc,
+						.type = type_map(type),
+						.id = name,
+						.value = name,
+						.isnew = is_new(name),
+						.group = groupname,
+						.checked = is_enable(name)
+				};
+				nitems++;
 		}
-		return 0;
+		return nitems;
 		
 }
 
-int env_get_group(ItemGroup *itemgroup, char *name, char *type){
+int
+env_get_group(ItemGroup *itemgroup, char *name, char *type){
 		char buf[256];
 		const char *desc;
 		StringList *itemnames;
 		InputItem *items;
+		int nitems;
 
-		if (snprintf(buf, sizeof(buf), "OPTIONS_%s_%s", type, name) >= (int)sizeof(buf))
-				warnx("group list %s has been truncated", name);
-		desc = get_desc(name, "");
+		/* there is special case for ALL_OPTIONS: it is a checkbox group without
+		 * description and with non-standart option list 
+		 */
+		if (strcmp(name, "ALL") == 0){
+				snprintf(buf, sizeof(buf), "ALL_OPTIONS");
+				desc = "All options";
+		}
+		else {
+				if (snprintf(buf, sizeof(buf), "OPTIONS_%s_%s", type, name) >= (int)sizeof(buf))
+						warnx("group list %s has been truncated", name);
+				desc = get_desc(name, "");
+		}
 		itemnames = parse_env_sl(buf);
-		get_items(&items, itemnames, type, name);
-		itemgroup = &(struct ItemGroup){
-				.name = strdup(name),
-				.desc = strdup(desc),
-				.items = items
-		};
+		nitems = get_items(&items, itemnames, type, name);
+		itemgroup->name = name;
+		itemgroup->desc = desc;
+		itemgroup->items = items;
+		itemgroup->nitems = nitems;
 		return 0;
 }
 
 int main(){
-	ItemGroup test;
-	//test = malloc(sizeof(ItemGroup));
-	env_get_group(&test, "M1", "MULTI");
-	printf("%s\n", test.name);
+	enable_items = parse_env_sl("PORT_OPTIONS");
+	new_items = parse_env_sl("NEW_OPTIONS");
+
+
+	//env_get_group(&test, "M1", "MULTI");
+	env_get_group(&test, "ALL", "MULTI");
+	printf("%s\n", test.items[0].type);
+	printf("%d\n", test.nitems);
 }

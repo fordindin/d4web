@@ -24,7 +24,7 @@ typedef struct InputItem {
 		const char *type;
 		const char *id;
 		const char *value;
-		const char *hclass;
+		bool isnew;
 		const char *group;
 		bool checked;
 } InputItem;
@@ -33,18 +33,8 @@ typedef struct ItemGroup {
 		const char *name;
 		const char *desc;
 		InputItem *items;
+		int nitems;
 } ItemGroup;
-
-int FormItem (
-				InputItem **item,
-				const char *name,
-				const char *desc,
-				const char *type,
-				const char *id,
-				const char *value,
-				const char *hclass,
-				const char *group,
-				bool checked );
 
 int InputItemStr( char *out, InputItem *item );
 int DocumentBody( char *out);
