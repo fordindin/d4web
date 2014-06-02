@@ -34,10 +34,22 @@ typedef InputItem * ItemList;
 typedef struct ItemGroup {
 		const char *name;
 		const char *desc;
-		InputItem *items;
+		ItemList items;
 		int nitems;
 } ItemGroup;
 
-int InputItemStr( char *out, InputItem *item );
-int DocumentBody( char *out);
+typedef ItemGroup * ItemGroups;
 
+typedef struct ItemGroupList {
+		int nitems;
+		ItemGroups *groups;
+} ItemGroupList;
+
+
+char *InputItemStr(InputItem *item );
+char *DocumentBody();
+char *GroupListStr(ItemGroupList grouplist);
+char *ItemGroupStr(ItemGroup *group);
+ItemGroupList get_group_list();
+
+const char *bodytemplate;

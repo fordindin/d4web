@@ -1,5 +1,5 @@
 all:
-	cc -ggdb -L ~/lib -lmicrohttpd -I ~/include -o d4web htmlgen.c dialog4web.c
+	cc -ggdb -L ~/lib -lmicrohttpd -I ~/include -o d4web htmlgen.c envparser.c dialog4web.c
 
 clear:
 	rm d4web

@@ -28,6 +28,8 @@
 
 #include "dialog4web.h"
 
+const int maxdocsize = 262144;
+
 static StringList *
 parse_env_sl(char const *env_name)
 {
@@ -64,19 +66,18 @@ answer_to_connection (
 {
 	
 		int ret;
-		char *buf, *bodytemplate, *body;
-		
-		buf = (char *)malloc(MAXDOCSIZE),
-		bodytemplate = (char *)malloc(MAXDOCSIZE),
-		body = (char *)malloc(MAXDOCSIZE);
+		char *buf = malloc(maxdocsize);
+		char *body = malloc(maxdocsize);
+		ItemGroupList grouplist;
 
-		InputItem *item, *item1, *item2;
+		InputItem **items;
 		struct MHD_Response *response;
 
-		ret = DocumentBody(bodytemplate);
+		grouplist = get_group_list();
 
-		item = FormItem("ItemName", "This is Item", "checkbox", "id0", "VALUE", "itemclass", "group", true);
-		ret  = InputItemStr(buf, item);
+		buf = GroupListStr(grouplist);
+		//item = FormItem("ItemName", "This is Item", "checkbox", "id0", "VALUE", "itemclass", "group", true);
+		//ret  = InputItemStr(buf, item);
 		sprintf(body, bodytemplate, buf);
 
   response = MHD_create_response_from_buffer (strlen (body), (void *) body,
@@ -84,7 +85,6 @@ answer_to_connection (
   MHD_add_response_header (response, "Content-Type", MIMETYPE);
   ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
   MHD_destroy_response (response);
-	free(bodytemplate);
 	free(body);
 	free(buf);
   return ret;

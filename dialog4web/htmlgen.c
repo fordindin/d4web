@@ -2,26 +2,51 @@
 
 #include "dialog4web.h"
 
-int InputItemStr( char *out, InputItem *item ){
-		sprintf(out,"<span>%s<input name='%s' type='%s' id='%s' value='%s' class='%s' %s />\n",
-						item->desc, item->group, item->type,
-						item->id, item->value, item->isnew ? "new" : "old",
-						item->checked ? "checked" : "" );
-		return 0;
+const char *bodytemplate = "<html><head>"
+"<style type='text/css'>"
+"div.itemgroup {border: 1px solid black; padding: 5px; margin: 5px};"
+".itemgroupheader {color: blue};"
+".new { background-color: red; };"
+".content {width: 80%; };"
+"input {padding: 3px;};"
+"</style></head>"
+"<body><div><div class='content'><form action='/input' method='POST'>%s"
+"<input type='submit' name='Submit' value='Submit' />"
+"<input type='submit' name='Cancel' value='Cancel' />"
+"</form></div></div></body></html>";
+
+const static int bufsize = 262144;
+
+char *
+InputItemStr(InputItem *item){
+		char *out = malloc(bufsize);
+		sprintf(out,"<div class='%s'><input name='%s' type='%s' id='%s' value='%s' %s>%s</input></div>\n",
+						item->isnew ? "new" : "old",
+						item->group, item->type,
+						item->id, item->value, 
+						item->checked ? "checked" : "", item->desc );
+		return (out);
 }
 
-int DocumentBody (char *out){
-		sprintf(out, "<html><body>%%s</body></html>");
-		return 0;
+char *
+GroupListStr(ItemGroupList grouplist){
+		char *out = malloc(bufsize);
+		for (int i=0; i < grouplist.nitems; i++){
+				strncat(out, ItemGroupStr(grouplist.groups[i]), bufsize);
+		}
+		return (out);
 }
-/*
-int
-main(){
-		char *out;
-		int ret;
-		InputItem *item;
-		item = FormItem("ItemName", "This is Item", "checkbox", "id0", "VALUE", "itemclass", 0);
-		ret  = InputItemStr(out, item);
-		printf ("%s\n", out);
+
+char *
+ItemGroupStr(ItemGroup *group){
+		char *items_str = malloc(bufsize);
+		char *out = malloc(bufsize);
+		for (int i=0; i < group->nitems; i++){
+				strncat(items_str, InputItemStr(&group->items[i]), bufsize);
+		}
+		sprintf (out, "<div id='%s' class='itemgroup'><span class='itemgroupheader'>%s</span>%s</div>",
+						group->name,
+						group->desc,
+						items_str);
+		return (out);
 }
-*/

@@ -1,5 +1,6 @@
 #include "dialog4web.h"
 
+#include <wchar.h>
 static StringList *enable_items = NULL;
 static StringList *new_items = NULL;
 
@@ -74,20 +75,37 @@ int get_items(ItemList *items, StringList *itemnames, char *type, char *groupnam
 		int sl_len, nitems;
 		nitems = 0;
 		sl_len = itemnames->sl_cur;
-		*items = (ItemList)calloc(sl_len, sizeof(InputItem));
+		if ( strncmp(type, "SINGLE", strlen("SINGLE") ) != 0)
+				*items = (ItemList) calloc (sl_len, sizeof(InputItem));
+		else
+				*items = (ItemList) calloc (sl_len + 1, sizeof(InputItem));
 
 		for (int i=0; i < sl_len; i++){
 				name = strdup(itemnames->sl_str[i]);
 				desc = get_desc(itemnames->sl_str[i], "");
-				items[i] = (InputItem *)malloc(sizeof(InputItem));
-				(*items)[i].name = strdup(name);
-				(*items)[i].desc = strdup(desc);
-				(*items)[i].type = strdup(type);
-				(*items)[i].id = strdup(name);
-				(*items)[i].value = strdup(name);
-				(*items)[i].isnew = is_new(name);
-				(*items)[i].group = strdup(groupname);
-				(*items)[i].checked = is_enable(name);
+				(*items)[i] = (InputItem) {
+						.name = name,
+						.desc = desc,
+						.type = type_map(type),
+						.id = name,
+						.value = name,
+						.isnew = is_new(name),
+						.group = groupname,
+						.checked = is_enable(name)
+				};
+				nitems++;
+		}
+		if ( strncmp(type, "SINGLE", strlen("SINGLE") ) == 0){
+				(*items)[nitems] = (InputItem) {
+						.name = "None",
+						.desc = "None of them",
+						.type = type_map(type),
+						.id = "None",
+						.value = "None",
+						.isnew = false,
+						.group = groupname,
+						.checked = false
+				};
 				nitems++;
 		}
 		return nitems;
@@ -118,21 +136,67 @@ env_get_group(char *name, char *type){
 		}
 		itemnames = parse_env_sl(buf);
 		nitems = get_items(&items, itemnames, type, name);
-		(*itemgroup).name = strdup(name);
-		(*itemgroup).desc = strdup(desc);
-		(*itemgroup).items = (ItemList)items;
-		(*itemgroup).nitems = nitems;
+		*itemgroup = (ItemGroup){
+				.name = name,
+				.desc = desc,
+				.items = (ItemList)items,
+				.nitems = nitems
+		};
 		return (itemgroup);
 }
 
-int main(){
+ItemGroupList
+get_group_list(){
 	enable_items = parse_env_sl("PORT_OPTIONS");
 	new_items = parse_env_sl("NEW_OPTIONS");
-	ItemGroup *test;
+	StringList *tmp_sl = NULL;
+	ItemGroups *grouplist = NULL;
+	int groupcount;
+	char buf[256];
+	static const int ngroups = 5;
+	char *typenames[ngroups] = {
+			"ALL",
+			"RADIO",
+			"SINGLE",
+			"GROUP",
+			"MULTI"
+	};
 
+	grouplist = (ItemGroups *) malloc (sizeof(ItemGroups));
+	groupcount = 0;
 
-	test = env_get_group("M2", "MULTI");
-	//env_get_group(&test, "ALL", "MULTI");
-	printf("%d\n", test->nitems);
-	printf("%s\n", test->items[0].name);
+	for (int i=0; i < ngroups; i++)
+			if (strncmp(typenames[i], "ALL", strlen("ALL")) == 0){
+					grouplist = (ItemGroups *) realloc (grouplist, sizeof(ItemGroups)*groupcount+1);
+					grouplist[groupcount] = env_get_group("ALL", "MULTI");
+					groupcount++;
+			} else {
+					if (snprintf(buf, sizeof(buf), "OPTIONS_%s", typenames[i]) >= (int)sizeof(buf))
+						warnx("Parameters for %s have been truncated", typenames[i]);
+					tmp_sl = parse_env_sl(buf);
+					for (int j=0; j < tmp_sl->sl_cur; j++){
+							grouplist = (ItemGroups *) realloc (grouplist, sizeof(ItemGroups)*groupcount+1);
+							grouplist[groupcount] = env_get_group(tmp_sl->sl_str[j], typenames[i]);
+							groupcount++;
+					}
+			}
+	return (ItemGroupList) {
+			.nitems = groupcount,
+			.groups = grouplist
+	};
 }
+
+/*
+int main(){
+	ItemGroupList test;
+	
+	test = get_group_list();
+	for (int i=0; i < test.nitems; i++){
+			printf ("%d\n", test.groups[i]->nitems);
+			for (int j=0; j < test.groups[i]->nitems; j++){
+					printf ("%d\n", test.groups[i]->nitems);
+					printf("\t%s\n", test.groups[i]->items[j].name);
+			}
+	}
+}
+*/

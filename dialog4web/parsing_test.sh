@@ -1,6 +1,6 @@
 #!/bin/sh
 
-DIALOG=./envparser
+DIALOG=./d4web
 
 export D4PHEIGHT=0
 export D4PMINHEIGHT=5
@@ -62,4 +62,4 @@ export MM2_DESC="MM2 text text"
 export MM3_DESC="text MM3 text"
 export MM4_DESC="MM4 text text"
 export MM5_DESC="MM5 text text"
-gdb ${DIALOG}
+${DIALOG}
